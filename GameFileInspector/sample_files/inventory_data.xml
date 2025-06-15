@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gameData>
+    <player>
+        <id>player_001</id>
+        <name>TestPlayer</name>
+        <level>42</level>
+        <experience>125000</experience>
+        <gold>75000</gold>
+        <gems>250</gems>
+    </player>
+    
+    <inventory>
+        <item id="sword_001">
+            <name>Iron Sword</name>
+            <type>weapon</type>
+            <damage>45</damage>
+            <durability>100</durability>
+            <quantity>1</quantity>
+            <equipped>true</equipped>
+        </item>
+        
+        <item id="potion_health">
+            <name>Health Potion</name>
+            <type>consumable</type>
+            <healing>50</healing>
+            <quantity>15</quantity>
+            <equipped>false</equipped>
+        </item>
+        
+        <item id="armor_chest">
+            <name>Steel Chestplate</name>
+            <type>armor</type>
+            <defense>25</defense>
+            <durability>85</durability>
+            <quantity>1</quantity>
+            <equipped>true</equipped>
+        </item>
+        
+        <item id="gem_ruby">
+            <name>Ruby Gem</name>
+            <type>material</type>
+            <value>500</value>
+            <quantity>3</quantity>
+            <equipped>false</equipped>
+        </item>
+    </inventory>
+    
+    <stats>
+        <health current="100" maximum="100"/>
+        <mana current="80" maximum="100"/>
+        <stamina current="95" maximum="100"/>
+        <attack>65</attack>
+        <defense>40</defense>
+        <speed>30</speed>
+        <luck>15</luck>
+    </stats>
+    
+    <achievements>
+        <achievement id="first_kill" unlocked="true" progress="1" requirement="1"/>
+        <achievement id="gold_collector" unlocked="false" progress="75000" requirement="100000"/>
+        <achievement id="level_master" unlocked="true" progress="42" requirement="50"/>
+        <achievement id="item_hoarder" unlocked="false" progress="22" requirement="100"/>
+    </achievements>
+    
+    <settings>
+        <graphics>
+            <quality>high</quality>
+            <resolution width="1920" height="1080"/>
+            <fullscreen>false</fullscreen>
+            <vsync>true</vsync>
+        </graphics>
+        
+        <audio>
+            <masterVolume>0.8</masterVolume>
+            <musicVolume>0.7</musicVolume>
+            <sfxVolume>0.9</sfxVolume>
+            <voiceVolume>0.8</voiceVolume>
+            <muted>false</muted>
+        </audio>
+        
+        <controls>
+            <mouseSensitivity>50</mouseSensitivity>
+            <invertMouse>false</invertMouse>
+            <keyBindings>
+                <key action="move_forward">W</key>
+                <key action="move_backward">S</key>
+                <key action="move_left">A</key>
+                <key action="move_right">D</key>
+                <key action="jump">SPACE</key>
+                <key action="attack">MOUSE_LEFT</key>
+                <key action="block">MOUSE_RIGHT</key>
+            </keyBindings>
+        </controls>
+    </settings>
+    
+    <progress>
+        <currentQuest>find_ancient_artifact</currentQuest>
+        <completedQuests>12</completedQuests>
+        <totalQuests>25</totalQuests>
+        <worldsUnlocked>3</worldsUnlocked>
+        <totalWorlds>5</totalWorlds>
+        <secretsFound>8</secretsFound>
+        <totalSecrets>20</totalSecrets>
+    </progress>
+    
+    <timestamps>
+        <created>2025-06-01T10:00:00Z</created>
+        <lastPlayed>2025-06-15T14:30:00Z</lastPlayed>
+        <totalPlayTime>3600000</totalPlayTime>
+        <sessionCount>45</sessionCount>
+    </timestamps>
+</gameData>

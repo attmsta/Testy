@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_hex_editor"
+        android:title="@string/hex_editor"
+        android:icon="@drawable/ic_code"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/action_backup_file"
+        android:title="@string/backup_file"
+        android:icon="@drawable/ic_save"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/action_restore_file"
+        android:title="@string/restore_file"
+        app:showAsAction="never" />
+    
+</menu>

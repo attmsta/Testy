@@ -1,0 +1,62 @@
+{
+  "player": {
+    "name": "TestPlayer",
+    "level": 25,
+    "experience": 15750,
+    "gold": 12500,
+    "gems": 150,
+    "energy": 100,
+    "maxEnergy": 100
+  },
+  "inventory": {
+    "weapons": [
+      {
+        "id": "sword_001",
+        "name": "Iron Sword",
+        "damage": 45,
+        "durability": 85,
+        "level": 3
+      },
+      {
+        "id": "bow_002",
+        "name": "Elven Bow",
+        "damage": 38,
+        "durability": 92,
+        "level": 2
+      }
+    ],
+    "items": {
+      "health_potion": 25,
+      "mana_potion": 18,
+      "rare_crystal": 3,
+      "iron_ore": 45,
+      "wood": 120
+    }
+  },
+  "progress": {
+    "currentStage": 15,
+    "completedLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    "unlockedAreas": ["forest", "mountains", "desert"],
+    "achievements": {
+      "first_victory": true,
+      "level_10_reached": true,
+      "gold_collector": false,
+      "master_explorer": false
+    }
+  },
+  "stats": {
+    "totalPlayTime": 7200,
+    "enemiesDefeated": 342,
+    "questsCompleted": 28,
+    "deathCount": 12,
+    "highestScore": 98750
+  },
+  "settings": {
+    "soundEnabled": true,
+    "musicVolume": 0.8,
+    "difficulty": "normal",
+    "autoSave": true
+  },
+  "lastSaved": "2025-06-15T10:30:00Z",
+  "version": "1.2.3"
+}

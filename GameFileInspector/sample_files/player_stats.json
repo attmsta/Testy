@@ -1,0 +1,68 @@
+{
+  "playerId": "player_12345",
+  "statistics": {
+    "combat": {
+      "totalDamageDealt": 125000,
+      "totalDamageTaken": 45000,
+      "criticalHits": 89,
+      "perfectBlocks": 156,
+      "comboCount": 23
+    },
+    "economy": {
+      "totalGoldEarned": 85000,
+      "totalGoldSpent": 72500,
+      "itemsSold": 234,
+      "itemsBought": 189,
+      "tradesCompleted": 45
+    },
+    "exploration": {
+      "distanceTraveled": 15000,
+      "secretsFound": 12,
+      "treasuresDiscovered": 28,
+      "mapsExplored": 8,
+      "hiddenAreasUnlocked": 5
+    },
+    "social": {
+      "friendsAdded": 15,
+      "messagesExchanged": 234,
+      "guildsJoined": 2,
+      "helpRequestsSent": 8,
+      "helpRequestsReceived": 12
+    }
+  },
+  "achievements": {
+    "combat_master": {
+      "unlocked": true,
+      "progress": 100,
+      "unlockedDate": "2025-06-10T14:22:00Z"
+    },
+    "gold_hoarder": {
+      "unlocked": false,
+      "progress": 75,
+      "requirement": 100000
+    },
+    "explorer": {
+      "unlocked": true,
+      "progress": 100,
+      "unlockedDate": "2025-06-08T09:15:00Z"
+    },
+    "social_butterfly": {
+      "unlocked": false,
+      "progress": 60,
+      "requirement": 25
+    }
+  },
+  "rankings": {
+    "globalRank": 1247,
+    "localRank": 23,
+    "seasonRank": 156,
+    "guildRank": 3
+  },
+  "currency": {
+    "coins": 25000,
+    "gems": 450,
+    "tokens": 125,
+    "premiumCurrency": 89
+  },
+  "lastUpdated": "2025-06-15T10:30:00Z"
+}

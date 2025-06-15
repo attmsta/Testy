@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- File type colors -->
+    <color name="save_file_color">#FF4CAF50</color>
+    <color name="config_file_color">#FF2196F3</color>
+    <color name="database_file_color">#FF9C27B0</color>
+    <color name="json_file_color">#FFFF9800</color>
+    <color name="xml_file_color">#FFFF5722</color>
+    <color name="pref_file_color">#FF607D8B</color>
+    <color name="binary_file_color">#FF795548</color>
+    <color name="unknown_file_color">#FF9E9E9E</color>
+    
+    <!-- Background colors -->
+    <color name="writable_file_background">#FFF8F8F8</color>
+    <color name="readonly_file_background">#FFEEEEEE</color>
+    
+    <!-- Data type colors -->
+    <color name="currency_color">#FFFF9800</color>
+    <color name="score_color">#FF4CAF50</color>
+    <color name="level_color">#FF2196F3</color>
+    <color name="experience_color">#FF9C27B0</color>
+    <color name="integer_color">#FF607D8B</color>
+    <color name="float_color">#FF795548</color>
+    <color name="string_color">#FFFF5722</color>
+    <color name="boolean_color">#FF009688</color>
+    
+    <!-- Confidence colors -->
+    <color name="high_confidence">#FF4CAF50</color>
+    <color name="medium_confidence">#FFFF9800</color>
+    <color name="low_confidence">#FFF44336</color>
+</resources>
