@@ -1,6 +1,33 @@
 # Game File Inspector
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/photoparsley/test/actions)
+[![Release](https://img.shields.io/badge/release-latest-blue)](https://github.com/photoparsley/test/releases)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Android](https://img.shields.io/badge/platform-Android%207.0%2B-green)](https://developer.android.com)
+
 A powerful Android application for reverse engineering and modifying game files without requiring root access. This app allows users to analyze and modify game save files, configuration files, and other accessible game data to change values like gold coins, levels, experience points, and more.
+
+## 🚀 Automated Builds & Releases
+
+This project features comprehensive build automation that creates APK releases automatically:
+
+- ✅ **Automatic APK Generation** on every push to main branch
+- ✅ **GitHub Releases** with downloadable APK files  
+- ✅ **GitLab CI/CD** with comprehensive testing and deployment
+- ✅ **Local Build Scripts** for development and testing
+- ✅ **Quality Assurance** with automated testing and security scanning
+
+### 📥 Download Latest Release
+
+**[📱 Download Latest APK](https://github.com/photoparsley/test/releases/latest)** - Always up-to-date with the latest features
+
+### 🔄 Build Status
+
+| Platform | Status | Download |
+|----------|--------|----------|
+| GitHub Actions | ![Build](https://img.shields.io/badge/build-automated-success) | [Latest Release](https://github.com/photoparsley/test/releases) |
+| GitLab CI/CD | ![Pipeline](https://img.shields.io/badge/pipeline-automated-success) | [Pipeline Artifacts](https://gitlab.com/photoparsley/test/-/pipelines) |
+| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` |
 
 ## Features
 
