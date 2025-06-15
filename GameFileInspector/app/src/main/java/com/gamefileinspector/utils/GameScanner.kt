@@ -17,6 +17,23 @@ class GameScanner {
     
     fun scanInstalledGames(context: Context, callback: (List<GameInfo>) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
+            // Use enhanced scanner for better detection
+            val enhancedScanner = EnhancedGameScanner()
+            val enhancedGames = try {
+                enhancedScanner.scanForGamesEnhanced(context)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            
+            // If enhanced scanner found games, use those
+            if (enhancedGames.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    callback(enhancedGames.sortedBy { it.name })
+                }
+                return@launch
+            }
+            
+            // Fallback to original scanning
             val games = mutableListOf<GameInfo>()
             val packageManager = context.packageManager
             

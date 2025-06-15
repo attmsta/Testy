@@ -47,6 +47,13 @@ data class FileAnalysis(
 sealed class FileStructure {
     object Binary : FileStructure()
     object PlainText : FileStructure()
+    object BINARY : FileStructure()
+    object TEXT : FileStructure()
+    object JSON : FileStructure()
+    object XML : FileStructure()
+    object KEY_VALUE : FileStructure()
+    object DATABASE : FileStructure()
+    object UNKNOWN : FileStructure()
     data class Json(val keys: List<String>) : FileStructure()
     data class Xml(val elements: List<String>) : FileStructure()
     data class Database(val tables: List<String>) : FileStructure()

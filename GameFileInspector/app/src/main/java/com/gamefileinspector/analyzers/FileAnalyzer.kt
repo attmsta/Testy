@@ -38,13 +38,41 @@ class FileAnalyzer {
         
         val encoding = detectEncoding(content)
         val structure = analyzeStructure(content, encoding)
-        val possibleValues = findPossibleGameValues(content, structure, encoding)
+        
+        // Use enhanced analyzers for deeper inspection
+        val possibleValues = mutableListOf<PossibleValue>()
+        
+        // Deep file analysis
+        possibleValues.addAll(DeepFileAnalyzer.performDeepAnalysis(gameFile))
+        
+        // File structure analysis
+        possibleValues.addAll(FileStructureAnalyzer.analyzeFileStructure(file))
+        
+        // Pattern-based analysis
+        if (encoding != null) {
+            try {
+                val textContent = String(content, Charset.forName(encoding))
+                possibleValues.addAll(ValuePatternDetector.analyzeValuePatterns(textContent))
+            } catch (e: Exception) {
+                // Continue with other analysis methods
+            }
+        }
+        
+        // Fallback to original analysis
+        possibleValues.addAll(findPossibleGameValues(content, structure, encoding))
+        
+        // Remove duplicates and enhance with context
+        val uniqueValues = possibleValues
+            .distinctBy { "${it.key}_${it.value}_${it.location}" }
+            .map { enhanceValueWithFileContext(it, gameFile, file) }
+            .sortedByDescending { it.confidence }
+            .take(200)
         
         return FileAnalysis(
             file = gameFile,
             encoding = encoding,
             structure = structure,
-            possibleValues = possibleValues
+            possibleValues = uniqueValues
         )
     }
     
@@ -384,5 +412,44 @@ class FileAnalyzer {
         }
         
         return possibleValues
+    }
+    
+    /**
+     * Enhance value with additional file context
+     */
+    private fun enhanceValueWithFileContext(
+        value: PossibleValue, 
+        gameFile: GameFile, 
+        file: File
+    ): PossibleValue {
+        var enhancedConfidence = value.confidence
+        
+        // Boost confidence based on file name patterns
+        val fileName = file.name.lowercase()
+        val gameFileKeywords = listOf("save", "player", "profile", "progress", "game", "data")
+        
+        gameFileKeywords.forEach { keyword ->
+            if (fileName.contains(keyword)) {
+                enhancedConfidence = minOf(1.0, enhancedConfidence + 0.1)
+            }
+        }
+        
+        // Boost confidence based on game package
+        if (gameFile.gamePackage.contains("game", ignoreCase = true)) {
+            enhancedConfidence = minOf(1.0, enhancedConfidence + 0.05)
+        }
+        
+        // Create enhanced value
+        return PossibleValue(
+            key = value.key,
+            value = value.value,
+            dataType = value.dataType,
+            confidence = enhancedConfidence,
+            description = value.description,
+            location = value.location,
+            category = value.category,
+            offset = value.offset,
+            originalValue = value.originalValue
+        )
     }
 }
