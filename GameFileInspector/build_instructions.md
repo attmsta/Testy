@@ -236,52 +236,65 @@ android.enableJetifier=true
 
 ## Continuous Integration
 
-This project uses **GitHub Actions** for Continuous Integration and Continuous Deployment (CI/CD).
-The workflow is defined in the file `.github/workflows/build-and-release.yml` located in the `GameFileInspector` directory.
+This project uses **GitLab CI/CD** for Continuous Integration and Continuous Deployment (CI/CD).
+The entire pipeline configuration for the Android application, including build, test, security scanning (like secret detection), and release processes, is defined in the `GameFileInspector/.gitlab-ci.yml` file.
 
-Key features of the CI/CD setup include:
-- Automated builds on pushes and pull requests.
-- Running tests (unit tests, lint checks).
-- Building debug and release APKs.
-- Uploading build artifacts (APKs, test reports).
-- Creating GitHub Releases with attached APKs for main branch pushes and tags.
+Key features of this CI/CD setup include:
+- Automated builds triggered on pushes to specific branches and tags.
+- Execution of various tests (unit tests, lint checks, security scans).
+- Compilation of debug and release APKs.
+- Secure storage of build artifacts (APKs, test reports) within GitLab.
+- Automated creation of GitLab Releases, with APKs attached.
 
-You can view the status and logs of CI/CD runs under the "Actions" tab of the GitHub repository.
+You can view the status and logs of CI/CD pipeline runs under the "CI/CD" > "Pipelines" section of the GitLab repository.
 
-### GitHub Actions Example (Simplified snippet from the workflow)
-Below is a conceptual example of how a build step might look in the GitHub Actions workflow. For the actual configuration, please refer to `GameFileInspector/.github/workflows/build-and-release.yml`.
+### GitLab CI/CD Configuration Snippet
+A conceptual example of a job definition within `GameFileInspector/.gitlab-ci.yml` might look like this:
 
 ```yaml
-name: Build APK # Part of a larger workflow
-on: [push, pull_request] # Simplified trigger
+build_debug: # Job name
+  stage: build # Assigns job to the 'build' stage
+  script: # Commands to execute
+    - echo "Building debug APK..."
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleDebug) # Actual command from the CI file
+  artifacts: # Defines files to save after job completion
+    paths:
+      - $PROJECT_SUBDIR/app/build/outputs/apk/debug/app-debug.apk # Path to the artifact
+    expire_in: 1 week # How long to keep the artifact
+  only: # Conditions for running the job
+    - branches # e.g., run for all branches
+```
+For the complete and actual configuration, please refer to the `GameFileInspector/.gitlab-ci.yml` file.
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-    - name: Build APK
-      run: ./gradlew assembleDebug
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+# The following 'jobs: build: runs-on: ubuntu-latest' was a GitHub Actions example,
+# it's removed as it's not relevant to GitLab CI.
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+    # steps:
+    # - uses: actions/checkout@v3
+    # - name: Set up JDK 17
+    #   uses: actions/setup-java@v3
+    #   with:
+    #     java-version: '17'
+    #     distribution: 'temurin'
+    # # - name: Setup Android SDK # This is handled by image and before_script in GitLab CI
+    # # - name: Build APK
+    # #   run: ./gradlew assembleDebug # Example script line
+    # # - name: Upload APK # Handled by artifacts:paths in GitLab CI
+    # #   uses: actions/upload-artifact@v3
+    # #   with:
+    # #     name: app-debug
+    # #     path: app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Distribution
 
 ### APK Distribution
-1. Upload to GitHub Releases
-2. Host on your own server
-3. Distribute via email or messaging
+1. Download from GitLab Releases.
+2. Download from GitLab CI/CD pipeline artifacts.
+3. Host on your own server.
+4. Distribute via email or messaging.
 
 ### Play Store (Future)
 1. Create developer account

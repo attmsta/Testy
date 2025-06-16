@@ -10,7 +10,9 @@ The main project code and detailed documentation are located in the `GameFileIns
 
 ## CI/CD
 
-This project uses **GitHub Actions** for continuous integration and build automation. The workflow configuration can be found in `GameFileInspector/.github/workflows/build-and-release.yml`. Builds are automatically triggered on pushes and pull requests, generating APKs and creating releases.
+This project uses **GitLab CI/CD** for continuous integration and build automation. The primary CI/CD pipeline configuration for the Android application, including its build, test, security scan, and release lifecycle, is defined in `GameFileInspector/.gitlab-ci.yml`.
+
+Builds are automatically triggered on pushes and pull requests, generating APKs and creating releases as defined in this pipeline.
 
 ## Getting Started
 

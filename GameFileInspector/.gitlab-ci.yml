@@ -1,0 +1,335 @@
+# GitLab CI/CD Pipeline for Game File Inspector
+# Automatically builds and releases APK files on every push
+
+image: openjdk:17-jdk
+
+variables:
+  ANDROID_COMPILE_SDK: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_SDK_TOOLS: "9477386"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle" # Global Gradle home, usually outside project dir for caching shared libs
+  PROJECT_SUBDIR: "GameFileInspector"
+  SECRET_DETECTION_ENABLED: 'true'
+
+stages:
+  - prepare
+  - test
+  - secret-detection # Added new stage
+  - build
+  - release
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - $PROJECT_SUBDIR/.gradle/ # Project-specific .gradle files/cache
+    - $PROJECT_SUBDIR/app/build/
+    - $PROJECT_SUBDIR/build/
+
+before_script:
+  - apt-get --quiet update --yes
+  - apt-get --quiet install --yes wget tar unzip lib32stdc++6 lib32z1
+  - export ANDROID_HOME="$PWD/android-sdk-linux"
+  - export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin"
+  - wget --quiet --output-document=android-sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS}_latest.zip
+  - unzip -q android-sdk.zip -d android-sdk-linux
+  - mkdir -p $ANDROID_HOME/cmdline-tools/latest
+  # The android-sdk-linux directory is created at $PWD (repo root)
+  - mv android-sdk-linux/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/ || echo "No cmdline-tools to move, structure might have changed or tools already in place."
+  - echo y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-${ANDROID_COMPILE_SDK}"
+  - echo y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools"
+  - echo y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;${ANDROID_BUILD_TOOLS}"
+  - chmod +x $PROJECT_SUBDIR/gradlew
+
+# Prepare environment and dependencies
+prepare:
+  stage: prepare
+  script:
+    - echo "Preparing build environment..."
+    - (cd $PROJECT_SUBDIR && ./gradlew --version)
+    - echo "Android SDK location: $ANDROID_HOME"
+    - ls -la $ANDROID_HOME/platforms/
+  artifacts:
+    paths:
+      - android-sdk-linux/
+    expire_in: 1 hour
+
+# Run tests
+test:
+  stage: test
+  script:
+    - echo "Running unit tests..."
+    - (cd $PROJECT_SUBDIR && ./gradlew test --stacktrace)
+    - echo "Running lint checks..."
+    - (cd $PROJECT_SUBDIR && ./gradlew lint --stacktrace)
+  artifacts:
+    reports:
+      junit:
+        - $PROJECT_SUBDIR/app/build/test-results/test*/TEST-*.xml
+    paths:
+      - $PROJECT_SUBDIR/app/build/reports/
+    expire_in: 1 week
+  allow_failure: false
+
+# Build debug APK
+build_debug:
+  stage: build
+  script:
+    - echo "Building debug APK..."
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleDebug --stacktrace)
+    - echo "Debug APK built successfully"
+    - ls -la $PROJECT_SUBDIR/app/build/outputs/apk/debug/
+  artifacts:
+    paths:
+      - $PROJECT_SUBDIR/app/build/outputs/apk/debug/app-debug.apk
+    expire_in: 1 week
+  only:
+    - branches
+
+# Build release APK
+build_release:
+  stage: build
+  script:
+    - echo "Building release APK..."
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleRelease --stacktrace)
+    - echo "Release APK built successfully"
+    - ls -la $PROJECT_SUBDIR/app/build/outputs/apk/release/
+    - |
+      # Get APK info
+      # Path is relative to $PROJECT_SUBDIR because gradlew runs there, but artifact path needs to be from repo root.
+      # However, the APK_PATH for `du -h` needs to be accessible.
+      APK_FULL_PATH="$PROJECT_SUBDIR/app/build/outputs/apk/release/app-release-unsigned.apk"
+      if [ -f "$APK_FULL_PATH" ]; then
+        APK_SIZE=$(du -h "$APK_FULL_PATH" | cut -f1)
+        echo "Release APK size: $APK_SIZE"
+        echo "APK_SIZE=$APK_SIZE" >> build.env
+        # This APK_PATH is used by release job, needs to be relative to artifact root.
+        echo "APK_PATH_IN_ARTIFACT=app/build/outputs/apk/release/app-release-unsigned.apk" >> build.env
+      fi
+  artifacts:
+    paths:
+      - $PROJECT_SUBDIR/app/build/outputs/apk/release/
+    reports:
+      dotenv: build.env
+    expire_in: 1 month
+  only:
+    - main
+    - tags
+
+# Create release with APK
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: build_release
+      artifacts: true
+  script:
+    - echo "Creating release..."
+    - |
+      # Generate release notes
+      RELEASE_NOTES="## Game File Inspector Release
+
+      ### 🎯 Features
+      - Rootless game file analysis and modification
+      - Multi-format support (JSON, XML, Properties, Binary, SQLite)
+      - AI-powered game value detection with confidence scoring
+      - Safe modification system with automatic backups
+      - Advanced hex editor for binary files
+      - Interactive demo mode for new users
+
+      ### 📱 APK Information
+      - **Size**: ${APK_SIZE:-Unknown}
+      - **Target SDK**: Android 14 (API 34)
+      - **Minimum SDK**: Android 7.0 (API 24)
+      - **Architecture**: Universal (ARM64, ARM32, x86_64)
+
+      ### 🔧 Technical Details
+      - Built with Gradle $($(cd $PROJECT_SUBDIR && ./gradlew --version) | grep 'Gradle' | head -1 | cut -d' ' -f2)
+      - Kotlin with modern Android patterns
+      - Material Design 3 UI
+      - Comprehensive error handling and validation
+
+      ### 📥 Installation
+      1. Download the APK file below
+      2. Enable 'Unknown Sources' in Android settings
+      3. Install the APK
+      4. Grant storage permissions when prompted
+      5. Start analyzing your game files!
+
+      ### ⚠️ Important Notes
+      - This app requires storage permissions to access game files
+      - Always backup your game data before making modifications
+      - Use at your own risk - we're not responsible for game data loss
+      - Some games may detect file modifications
+
+      **Commit**: $CI_COMMIT_SHA
+      **Pipeline**: $CI_PIPELINE_ID
+      **Built**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+      echo "$RELEASE_NOTES" > release_notes.md
+  release:
+    name: 'Game File Inspector v$CI_COMMIT_SHORT_SHA'
+    description: './release_notes.md'
+    tag_name: 'v$CI_COMMIT_SHORT_SHA'
+    assets:
+      links:
+        - name: 'GameFileInspector-release.apk'
+          url: '$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/file/$PROJECT_SUBDIR/app/build/outputs/apk/release/app-release-unsigned.apk'
+          # filepath is relative to the root of the artifact zip.
+          # Since artifacts:paths is "$PROJECT_SUBDIR/app/build/outputs/apk/release/",
+          # the file inside the zip will be at "app/build/outputs/apk/release/app-release-unsigned.apk"
+          # if the PROJECT_SUBDIR itself is the root of the artifact.
+          # To be safe, the path in the artifact is $PROJECT_SUBDIR/app/build/outputs/apk/release/app-release-unsigned.apk
+          # The release-cli will look for this path *within* the downloaded artifact.
+          # The artifact structure for path "$PROJECT_SUBDIR/app/build/outputs/apk/release/"
+          # will be GameFileInspector/app/build/outputs/apk/release/app-release-unsigned.apk
+          filepath: '/$PROJECT_SUBDIR/app/build/outputs/apk/release/app-release-unsigned.apk'
+          link_type: 'package'
+  only:
+    - main
+    - tags
+
+# Nightly build job
+nightly_build:
+  stage: build
+  script:
+    - echo "Running nightly build..."
+    - (cd $PROJECT_SUBDIR && ./gradlew clean assembleDebug assembleRelease --stacktrace)
+    - |
+      # Generate build report
+      echo "# Nightly Build Report - $(date)" > nightly_report.md # Created at repo root
+      echo "" >> nightly_report.md
+      echo "## Build Status: ✅ SUCCESS" >> nightly_report.md
+      echo "" >> nightly_report.md
+      echo "### APK Files Generated:" >> nightly_report.md
+      echo "- Debug APK: $(ls -lh $PROJECT_SUBDIR/app/build/outputs/apk/debug/*.apk | awk '{print $9 " (" $5 ")"}')" >> nightly_report.md
+      echo "- Release APK: $(ls -lh $PROJECT_SUBDIR/app/build/outputs/apk/release/*.apk | awk '{print $9 " (" $5 ")"}')" >> nightly_report.md
+      echo "" >> nightly_report.md
+      echo "### Test Results:" >> nightly_report.md
+      echo "- Unit Tests: $(find $PROJECT_SUBDIR/app/build/test-results -name "*.xml" | wc -l) test files" >> nightly_report.md
+      echo "- Lint Issues: $(find $PROJECT_SUBDIR/app/build/reports/lint-results* -name "*.xml" | wc -l) report files" >> nightly_report.md
+      echo "" >> nightly_report.md
+      echo "### Build Environment:" >> nightly_report.md
+      echo "- Gradle: $($(cd $PROJECT_SUBDIR && ./gradlew --version) | grep 'Gradle' | head -1)" >> nightly_report.md
+      echo "- Java: $(java -version 2>&1 | head -1)" >> nightly_report.md
+      echo "- Android SDK: API $ANDROID_COMPILE_SDK" >> nightly_report.md
+      echo "- Commit: $CI_COMMIT_SHA" >> nightly_report.md
+      echo "- Pipeline: $CI_PIPELINE_URL" >> nightly_report.md
+  artifacts:
+    paths:
+      - $PROJECT_SUBDIR/app/build/outputs/apk/ # APKs from subdirectory
+      - nightly_report.md # Report from root
+    expire_in: 1 week
+  only:
+    - schedules
+
+# Security scan
+security_scan:
+  stage: test
+  script:
+    - echo "Running security analysis..."
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleDebug)
+    - |
+      # Basic security checks
+      echo "Checking for hardcoded secrets..."
+      if grep -r "password\|secret\|key\|token" $PROJECT_SUBDIR/app/src/ --include="*.kt" --include="*.java" | grep -v "// TODO\|// FIXME"; then
+        echo "⚠️  Potential hardcoded secrets found"
+      else
+        echo "✅ No hardcoded secrets detected"
+      fi
+
+      echo "Checking permissions..."
+      if grep -E "android\.permission\.(WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE)" $PROJECT_SUBDIR/app/src/main/AndroidManifest.xml; then
+        echo "✅ Storage permissions declared"
+      fi
+
+      echo "Checking for debug flags..."
+      if grep "android:debuggable.*true" $PROJECT_SUBDIR/app/src/main/AndroidManifest.xml; then
+        echo "⚠️  Debug flag enabled"
+      else
+        echo "✅ Debug flag not enabled in manifest"
+      fi
+  allow_failure: true
+  only:
+    - main
+    - merge_requests
+
+# Performance test
+performance_test:
+  stage: test
+  script:
+    - echo "Running performance tests..."
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleDebug)
+    - |
+      # Analyze APK size
+      DEBUG_APK_FULL_PATH="$PROJECT_SUBDIR/app/build/outputs/apk/debug/app-debug.apk"
+      if [ -f "$DEBUG_APK_FULL_PATH" ]; then
+        APK_SIZE_BYTES=$(stat -c%s "$DEBUG_APK_FULL_PATH")
+        APK_SIZE_MB=$((APK_SIZE_BYTES / 1024 / 1024))
+        echo "APK Size: ${APK_SIZE_MB}MB"
+
+        if [ $APK_SIZE_MB -gt 50 ]; then
+          echo "⚠️  APK size is large (${APK_SIZE_MB}MB)"
+        else
+          echo "✅ APK size is reasonable (${APK_SIZE_MB}MB)"
+        fi
+      fi
+
+      # Check method count (approximate)
+      echo "Analyzing method count..."
+      if command -v unzip >/dev/null 2>&1; then
+        unzip -l "$DEBUG_APK_FULL_PATH" | grep "\.dex" | wc -l
+      fi
+  allow_failure: true
+  only:
+    - main
+    - merge_requests
+
+# Cleanup job
+cleanup:
+  stage: .post
+  script:
+    - echo "Cleaning up build artifacts..."
+    - rm -rf android-sdk-linux/ # This is at $PWD (repo root)
+    - (cd $PROJECT_SUBDIR && ./gradlew clean)
+  when: always
+  allow_failure: true
+
+# Manual deployment job
+deploy_manual:
+  stage: release
+  script:
+    - echo "Manual deployment triggered"
+    - (cd $PROJECT_SUBDIR && ./gradlew assembleRelease --stacktrace)
+    - |
+      echo "🚀 Manual Release Deployment"
+      echo "Commit: $CI_COMMIT_SHA"
+      echo "Branch: $CI_COMMIT_REF_NAME"
+      echo "Triggered by: $GITLAB_USER_NAME"
+      echo "APK Location: $PROJECT_SUBDIR/app/build/outputs/apk/release/"
+      ls -la $PROJECT_SUBDIR/app/build/outputs/apk/release/
+  artifacts:
+    paths:
+      - $PROJECT_SUBDIR/app/build/outputs/apk/release/
+    expire_in: 1 month
+  when: manual
+  only:
+    - main
+
+# Variables for different environments
+variables:
+  # Development
+  DEV_BUILD_TYPE: "debug"
+  # Production
+  PROD_BUILD_TYPE: "release"
+  # Signing (would need to be configured in GitLab CI/CD variables)
+  # KEYSTORE_FILE: (base64 encoded keystore)
+  # KEYSTORE_PASSWORD: (keystore password)
+  # KEY_ALIAS: (key alias)
+  # KEY_PASSWORD: (key password)
+
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+secret_detection: # This job is defined in the included template
+  stage: secret-detection # Assigns it to our new stage
