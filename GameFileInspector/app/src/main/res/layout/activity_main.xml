@@ -93,7 +93,7 @@
                 android:padding="8dp"
                 tools:listitem="@layout/item_game" />
 
-        </androidx.swiperefreshLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
 
