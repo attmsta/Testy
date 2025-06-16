@@ -53,19 +53,22 @@ jobs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-          .gradle
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          GameFileInspector/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('GameFileInspector/**/*.gradle*', 'GameFileInspector/**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
           
     - name: 🔧 Make gradlew executable
       run: chmod +x gradlew
+      working-directory: ./GameFileInspector
       
     - name: 🧪 Run unit tests
       run: ./gradlew test --stacktrace
+      working-directory: ./GameFileInspector
       
     - name: 🔍 Run lint checks
       run: ./gradlew lint --stacktrace
+      working-directory: ./GameFileInspector
       
     - name: 📊 Upload test results
       uses: actions/upload-artifact@v4
@@ -73,8 +76,8 @@ jobs:
       with:
         name: test-results
         path: |
-          app/build/reports/
-          app/build/test-results/
+          GameFileInspector/app/build/reports/
+          GameFileInspector/app/build/test-results/
         retention-days: 7
 
   # Build debug APK
@@ -103,19 +106,22 @@ jobs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-          .gradle
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          GameFileInspector/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('GameFileInspector/**/*.gradle*', 'GameFileInspector/**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
           
     - name: 🔧 Make gradlew executable
       run: chmod +x gradlew
+      working-directory: ./GameFileInspector
       
     - name: 🔨 Build debug APK
       run: ./gradlew assembleDebug --stacktrace
+      working-directory: ./GameFileInspector
       
     - name: 📊 Get APK info
       id: apk_info
+      working-directory: ./GameFileInspector
       run: |
         APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
         if [ -f "$APK_PATH" ]; then
@@ -131,7 +137,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: GameFileInspector/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 7
 
   # Build release APK
@@ -160,19 +166,22 @@ jobs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-          .gradle
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          GameFileInspector/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('GameFileInspector/**/*.gradle*', 'GameFileInspector/**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
           
     - name: 🔧 Make gradlew executable
       run: chmod +x gradlew
+      working-directory: ./GameFileInspector
       
     - name: 🚀 Build release APK
       run: ./gradlew assembleRelease --stacktrace
+      working-directory: ./GameFileInspector
       
     - name: 📊 Get APK info
       id: apk_info
+      working-directory: ./GameFileInspector
       run: |
         APK_PATH="app/build/outputs/apk/release/app-release-unsigned.apk"
         if [ -f "$APK_PATH" ]; then
@@ -195,8 +204,8 @@ jobs:
       with:
         name: release-apk
         path: |
-          app/build/outputs/apk/release/app-release-unsigned.apk
-          GameFileInspector-v${{ github.sha }}.apk
+          GameFileInspector/app/build/outputs/apk/release/app-release-unsigned.apk
+          GameFileInspector/GameFileInspector-v${{ github.sha }}.apk
         retention-days: 30
 
   # Create GitHub release

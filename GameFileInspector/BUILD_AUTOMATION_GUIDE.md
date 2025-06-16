@@ -6,54 +6,41 @@ This guide covers the comprehensive build automation system for Game File Inspec
 
 ## 🔄 Automated Build Workflows
 
-### GitLab CI/CD Pipeline (`.gitlab-ci.yml`)
-
-The GitLab CI/CD pipeline provides comprehensive automated building, testing, and releasing:
-
-#### Pipeline Stages
-1. **Prepare** - Environment setup and dependency caching
-2. **Test** - Unit tests and lint checks
-3. **Build** - Debug and release APK compilation
-4. **Release** - Automated release creation with APK artifacts
-
-#### Key Features
-- ✅ **Automatic APK Building** on every push to main branch
-- ✅ **Comprehensive Testing** with unit tests and lint analysis
-- ✅ **Artifact Management** with configurable retention periods
-- ✅ **Release Automation** with detailed release notes
-- ✅ **Security Scanning** for hardcoded secrets and permissions
-- ✅ **Performance Analysis** with APK size monitoring
-- ✅ **Nightly Builds** for continuous integration
-- ✅ **Manual Deployment** options for controlled releases
-
-#### Trigger Conditions
-```yaml
-# Automatic triggers
-- Push to main branch → Release APK build
-- Push to other branches → Debug APK build
-- Scheduled nightly builds → Full build with reports
-- Manual triggers → Configurable build types
-```
+This project uses **GitHub Actions** for CI/CD. The workflow is defined in `.github/workflows/build-and-release.yml`.
 
 ### GitHub Actions Workflow (`.github/workflows/build-and-release.yml`)
 
-The GitHub Actions workflow provides cross-platform CI/CD with GitHub integration:
+The GitHub Actions workflow provides comprehensive automated building, testing, and releasing, deeply integrated with GitHub.
 
 #### Workflow Jobs
-1. **Test** - Comprehensive testing suite
-2. **Build Debug** - Debug APK for pull requests and branches
-3. **Build Release** - Release APK for main branch and tags
-4. **Security Scan** - Security analysis and vulnerability checks
-5. **Create Release** - Automated GitHub releases with APK downloads
-6. **Performance Analysis** - APK size and performance monitoring
-7. **Code Quality** - Code statistics and quality metrics
+The workflow consists of several key jobs:
+1.  **`test`**: Runs unit tests and lint checks on the codebase. This ensures code quality and catches regressions early.
+2.  **`build-debug`**: Compiles a debug version of the APK. This is typically run on pull requests and pushes to non-main branches to verify build integrity.
+3.  **`build-release`**: Compiles a release version of the APK (unsigned). This is run on pushes to the `main` branch and when tags are created.
+4.  **`create-release`**: Automatically creates a GitHub Release when changes are pushed to the `main` branch or a tag is created. This job downloads the release APK from `build-release` and attaches it to the GitHub Release, along with generated release notes.
 
-#### Advanced Features
-- 🎯 **Smart Triggering** based on branch and event type
-- 🎯 **Artifact Caching** for faster builds
-- 🎯 **Multi-job Parallelization** for efficient CI/CD
-- 🎯 **Conditional Execution** based on file changes
-- 🎯 **Release Management** with automatic versioning
+*(Note: The workflow may include additional jobs for security scanning, performance analysis, etc., as configured in the YAML file.)*
+
+#### Key Features & Advanced Capabilities
+- ✅ **Automatic APK Building**: Triggered on pushes to `main`, `develop`, tags (`v*`), pull requests to `main`, scheduled nightly builds, and manual dispatches.
+- ✅ **Comprehensive Testing**: Includes unit tests and lint analysis.
+- ✅ **Artifact Management**: APKs and test results are stored as artifacts with configurable retention.
+- ✅ **Automated GitHub Releases**: New releases are automatically drafted or published with APKs and detailed release notes.
+- ✅ **Security Scanning**: (If configured) Checks for hardcoded secrets, permission issues, etc.
+- ✅ **Performance Analysis**: (If configured) Monitors APK size and other performance metrics.
+- 🎯 **Smart Triggering**: Builds and releases are triggered based on branch names (e.g., `main`, `develop`), event types (push, pull_request, tag), and file changes.
+- 🎯 **Artifact Caching**: Utilizes caching for Gradle dependencies (`~/.gradle/caches`, `~/.gradle/wrapper`, `GameFileInspector/.gradle`) to speed up build times. The cache key is based on OS and hash of Gradle files.
+- 🎯 **Multi-job Parallelization**: Jobs can run in parallel where appropriate to improve CI/CD efficiency.
+- 🎯 **Conditional Execution**: Jobs and steps can be run conditionally (e.g., `build-release` runs on `main` or tags, `create-release` depends on specific conditions).
+- 🎯 **Release Management**: Automatic versioning and release note generation are part of the `create-release` job.
+
+#### Accessing Build Artifacts and Logs
+- **Build Logs**: Available directly within the "Actions" tab of the GitHub repository. Each workflow run shows detailed logs for every step.
+- **APKs**:
+    - Debug APKs are uploaded as artifacts in the `build-debug` job runs.
+    - Release APKs are uploaded as artifacts in the `build-release` job runs.
+    - Release APKs are also attached to GitHub Releases created by the `create-release` job.
+- **Test Reports**: Uploaded as artifacts in the `test` job runs.
 
 ## 🛠️ Local Build Script (`build_apk.sh`)
 
@@ -119,17 +106,12 @@ Build Status: SUCCESS ✅
 
 ### Automatic Release Creation
 
-#### GitLab Releases
-- **Trigger**: Push to main branch or tags
-- **Artifacts**: Release APK with detailed metadata
-- **Versioning**: Automatic version generation based on commit SHA
-- **Release Notes**: Comprehensive feature list and build information
-
 #### GitHub Releases
-- **Trigger**: Push to main branch, tags, or manual workflow dispatch
-- **Assets**: Multiple APK variants with descriptive names
-- **Versioning**: Date-based or tag-based version naming
-- **Documentation**: Detailed installation and usage instructions
+- **Trigger**: Configured within the GitHub Actions workflow (`.github/workflows/build-and-release.yml`). Typically on pushes to the `main` branch or when new tags (e.g., `v1.0.0`) are pushed. Can also be triggered manually via `workflow_dispatch`.
+- **Assets**: The workflow uploads the release APK (e.g., `app-release-unsigned.apk`) and a versioned copy (e.g., `GameFileInspector-v<SHA>.apk`) to the GitHub Release.
+- **Versioning**: The `create-release` job in the workflow generates a version name. If triggered by a tag, it uses the tag name. Otherwise, it might use a date-based version with a commit SHA.
+- **Release Notes**: Automatically generated as part of the `create-release` job, summarizing features and build information.
+- **Access**: Releases are available under the "Releases" section of the GitHub repository.
 
 ### Release Artifacts
 Each release includes:
@@ -248,8 +230,7 @@ android {
 
 ### Distribution Channels
 - **GitHub Releases** - Public distribution with download links
-- **GitLab Releases** - Internal distribution with access control
-- **Direct APK** - Manual installation for testing
+- **Direct APK** - Manual installation for testing (can be downloaded from GitHub Actions artifacts or releases)
 - **App Stores** - Future Google Play Store distribution
 
 ## 🔄 Continuous Integration Best Practices
@@ -389,16 +370,15 @@ git tag v1.0.0 && git push --tags # Trigger tagged release
 ```
 
 ### Important Files
-- `.gitlab-ci.yml` - GitLab CI/CD pipeline configuration
-- `.github/workflows/build-and-release.yml` - GitHub Actions workflow
-- `build_apk.sh` - Local build script
+- `.github/workflows/build-and-release.yml` - GitHub Actions workflow configuration.
+- `build_apk.sh` - Local build script for development and manual builds.
 - `run_tests.sh` - Test execution script
 - `gradle.properties` - Gradle build configuration
 
 ### Support Resources
 - **Documentation** - Complete guides in repository
-- **Issue Tracking** - GitHub/GitLab issue systems
-- **Build Logs** - Detailed CI/CD execution logs
-- **Community** - Developer forums and discussions
+- **Issue Tracking** - GitHub Issues for bug reports and feature requests.
+- **Build Logs** - Detailed execution logs available in the GitHub Actions tab for each workflow run.
+- **Community** - Developer forums and discussions (if applicable).
 
-This automated build system ensures reliable, consistent, and secure APK generation for every code change, enabling rapid development and deployment of the Game File Inspector application.
+This automated build system, powered by GitHub Actions, ensures reliable, consistent, and secure APK generation for every code change, enabling rapid development and deployment of the Game File Inspector application.
