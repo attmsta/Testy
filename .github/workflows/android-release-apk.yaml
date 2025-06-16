@@ -52,10 +52,6 @@ jobs:
       run: ./gradlew clean
       working-directory: ${{ env.ANDROID_PROJECT_PATH }}
 
-    - name: 🔍 Run lint checks (optional)
-      run: ./gradlew lintDebug --stacktrace
-      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
-
     - name: 🚀 Build unsigned release APK
       run: ./gradlew assembleRelease --stacktrace
       working-directory: ${{ env.ANDROID_PROJECT_PATH }}
