@@ -11,11 +11,11 @@ A powerful Android application for reverse engineering and modifying game files 
 
 This project features comprehensive build automation that creates APK releases automatically:
 
-- ✅ **Automatic APK Generation** on every push to main branch
-- ✅ **GitHub Releases** with downloadable APK files  
-- ✅ **GitLab CI/CD** with comprehensive testing and deployment
-- ✅ **Local Build Scripts** for development and testing
-- ✅ **Quality Assurance** with automated testing and security scanning
+- ✅ **Automatic APK Generation** on every push to main branch and other triggers via GitHub Actions.
+- ✅ **GitHub Releases** with downloadable APK files created automatically.
+- ✅ **GitHub Actions** for CI/CD, providing comprehensive testing, building, and deployment.
+- ✅ **Local Build Scripts** for development and testing.
+- ✅ **Quality Assurance** with automated testing and security scanning through GitHub Actions.
 
 ### 📥 Download Latest Release
 
@@ -23,11 +23,10 @@ This project features comprehensive build automation that creates APK releases a
 
 ### 🔄 Build Status
 
-| Platform | Status | Download |
+| Platform | Status | Details |
 |----------|--------|----------|
-| GitHub Actions | ![Build](https://img.shields.io/badge/build-automated-success) | [Latest Release](https://github.com/photoparsley/test/releases) |
-| GitLab CI/CD | ![Pipeline](https://img.shields.io/badge/pipeline-automated-success) | [Pipeline Artifacts](https://gitlab.com/photoparsley/test/-/pipelines) |
-| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` |
+| GitHub Actions | ![Build](https://img.shields.io/badge/build-automated-success) | [Latest Release](https://github.com/photoparsley/test/releases) / [Actions Workflow](https://github.com/photoparsley/test/actions) |
+| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` (See [Build Instructions](BUILD_AUTOMATION_GUIDE.md)) |
 
 ## Features
 

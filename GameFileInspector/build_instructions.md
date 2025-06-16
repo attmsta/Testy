@@ -236,10 +236,24 @@ android.enableJetifier=true
 
 ## Continuous Integration
 
-### GitHub Actions Example
+This project uses **GitHub Actions** for Continuous Integration and Continuous Deployment (CI/CD).
+The workflow is defined in the file `.github/workflows/build-and-release.yml` located in the `GameFileInspector` directory.
+
+Key features of the CI/CD setup include:
+- Automated builds on pushes and pull requests.
+- Running tests (unit tests, lint checks).
+- Building debug and release APKs.
+- Uploading build artifacts (APKs, test reports).
+- Creating GitHub Releases with attached APKs for main branch pushes and tags.
+
+You can view the status and logs of CI/CD runs under the "Actions" tab of the GitHub repository.
+
+### GitHub Actions Example (Simplified snippet from the workflow)
+Below is a conceptual example of how a build step might look in the GitHub Actions workflow. For the actual configuration, please refer to `GameFileInspector/.github/workflows/build-and-release.yml`.
+
 ```yaml
-name: Build APK
-on: [push, pull_request]
+name: Build APK # Part of a larger workflow
+on: [push, pull_request] # Simplified trigger
 
 jobs:
   build:
