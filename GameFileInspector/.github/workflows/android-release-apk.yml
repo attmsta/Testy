@@ -32,6 +32,13 @@ jobs:
       # This action will automatically install the required SDK tools and platforms
       # based on the project's build.gradle files.
 
+    - name: Accept all Android SDK licenses
+      run: yes | ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      # Using ANDROID_SDK_ROOT which is set by setup-android action.
+      # Using 'latest/bin/sdkmanager' for robustness.
+      # '|| true' is a fallback to prevent build failure if the command itself has an issue
+      # but licenses might already be accepted or not be the blocking issue.
+
     - name: 🎯 Cache Gradle dependencies
       uses: actions/cache@v4
       with:
