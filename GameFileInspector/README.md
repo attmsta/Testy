@@ -1,7 +1,7 @@
 # Game File Inspector
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/photoparsley/test/actions)
-[![Release](https://img.shields.io/badge/release-latest-blue)](https://github.com/photoparsley/test/releases)
+[![GitHub Actions Build Status](https://img.shields.io/github/actions/workflow/status/photoparsley/test/android-release-apk.yml?branch=main&label=Release%20APK%20Build)](https://github.com/photoparsley/test/actions/workflows/android-release-apk.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/photoparsley/test?display_name=tag&sort=semver)](https://github.com/photoparsley/test/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Android](https://img.shields.io/badge/platform-Android%207.0%2B-green)](https://developer.android.com)
 
@@ -9,24 +9,25 @@ A powerful Android application for reverse engineering and modifying game files 
 
 ## 🚀 Automated Builds & Releases
 
-This project features comprehensive build automation that creates APK releases automatically using GitLab CI/CD:
+This project uses **GitHub Actions** to automatically build unsigned release APKs and create GitHub Releases when version tags (e.g., `v1.0.0`) are pushed. This is the primary way to get official releases. The workflow is defined in `.github/workflows/android-release-apk.yml`.
 
-- ✅ **Automatic APK Generation**: Triggered on pushes to relevant branches (e.g., `main`) as defined in `GameFileInspector/.gitlab-ci.yml`.
-- ✅ **GitLab Releases**: Automatically created with downloadable APK files.
-- ✅ **GitLab CI/CD**: Provides comprehensive testing, building, and deployment for the project.
-- ✅ **Local Build Scripts**: Available for development and testing (e.g., `build_apk.sh`).
-- ✅ **Quality Assurance**: Automated testing and security scanning are integrated into the GitLab CI/CD pipeline.
+Additionally, **GitLab CI/CD** (`.gitlab-ci.yml`) is used for general continuous integration, including:
+- ✅ Running tests on pushes and merge requests.
+- ✅ Building debug APKs for development purposes.
+- ✅ Nightly builds.
+- ✅ Integrated security scans (e.g., secret detection).
 
 ### 📥 Download Latest Release
 
-**[📱 Download Latest APK from GitLab Releases](https://gitlab.com/photoparsley/test/-/releases)** - Always up-to-date with the latest features (assuming releases are created here).
+**[📱 Download Latest APK from GitHub Releases](https://github.com/photoparsley/test/releases/latest)** - Always up-to-date with the latest features.
 
-### 🔄 Build Status
+### 🔄 Build Status & CI/CD Pipelines
 
-| Platform | Status | Details |
-|----------|--------|----------|
-| GitLab CI/CD | ![Pipeline](https://img.shields.io/badge/pipeline-automated-success) | [Pipeline Status](https://gitlab.com/photoparsley/test/-/pipelines) / [Releases](https://gitlab.com/photoparsley/test/-/releases) |
-| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` (See [BUILD_AUTOMATION_GUIDE.md](BUILD_AUTOMATION_GUIDE.md)) |
+| System | Purpose | Status / Link |
+|----------|---------|----------|
+| GitHub Actions | Release APK Build & GitHub Releases | [![Release APK Build](https://img.shields.io/github/actions/workflow/status/photoparsley/test/android-release-apk.yml?branch=main&label=Release%20Build)](https://github.com/photoparsley/test/actions/workflows/android-release-apk.yml) <br/> [Latest GitHub Release](https://github.com/photoparsley/test/releases/latest) |
+| GitLab CI/CD | General CI (Tests, Debug Builds, Security) | [![GitLab Pipeline](https://img.shields.io/badge/gitlab%20pipeline-passing-brightgreen.svg)](https://gitlab.com/photoparsley/test/-/pipelines) <br/> (Note: Replace badge URL with actual GitLab pipeline status badge if available) |
+| Local Build | Manual Development Builds | `./build_apk.sh` (See [BUILD_AUTOMATION_GUIDE.md](BUILD_AUTOMATION_GUIDE.md)) |
 
 ## Features
 

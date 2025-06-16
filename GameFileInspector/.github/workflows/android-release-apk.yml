@@ -1,0 +1,110 @@
+name: Android Release APK Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ] # e.g., v1.0.0, v1.2.3
+  workflow_dispatch: # Allows manual triggering
+
+env:
+  ANDROID_PROJECT_PATH: GameFileInspector
+  JAVA_VERSION: '17'
+  # ANDROID_COMPILE_SDK: "34" # Usually derived from project's build.gradle
+  # ANDROID_BUILD_TOOLS: "34.0.0" # Usually derived from project's build.gradle
+
+jobs:
+  build-release-apk:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: ☕ Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: 📱 Set up Android SDK
+      uses: android-actions/setup-android@v3
+      # This action will automatically install the required SDK tools and platforms
+      # based on the project's build.gradle files.
+
+    - name: 🎯 Cache Gradle dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ${{ env.ANDROID_PROJECT_PATH }}/.gradle
+        key: gradle-${{ runner.os }}-${{ hashFiles(format('{0}/**/*.gradle*', env.ANDROID_PROJECT_PATH), format('{0}/gradle/wrapper/gradle-wrapper.properties', env.ANDROID_PROJECT_PATH)) }}
+        restore-keys: |
+          gradle-${{ runner.os }}-
+
+    - name: 🔧 Grant execute permission to gradlew
+      run: chmod +x gradlew
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+
+    - name: ✨ Clean project
+      run: ./gradlew clean
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+
+    - name: 🧪 Run unit tests (optional)
+      run: ./gradlew testDebugUnitTest --stacktrace
+      # Using testDebugUnitTest to run tests for the debug variant, common practice.
+      # Change to testReleaseUnitTest if specific release tests exist.
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+      # continue-on-error: true # Decide if build should fail on test failures
+
+    - name: 🔍 Run lint checks (optional)
+      run: ./gradlew lintDebug --stacktrace
+      # Using lintDebug to run lint for the debug variant.
+      # Change to lintRelease if needed.
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+      # continue-on-error: true # Decide if build should fail on lint errors
+
+    - name: 🚀 Build unsigned release APK
+      run: ./gradlew assembleRelease --stacktrace
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+
+    - name: 🏷️ Rename APK
+      run: mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/GameFileInspector-release-unsigned.apk
+      working-directory: ${{ env.ANDROID_PROJECT_PATH }}
+
+    - name: 📤 Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: ${{ env.ANDROID_PROJECT_PATH }}/app/build/outputs/apk/release/GameFileInspector-release-unsigned.apk
+        retention-days: 7 # Adjust as needed
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: build-release-apk
+    if: startsWith(github.ref, 'refs/tags/v') # Only run for version tags
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Download APK Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-apk
+        path: apk-artifact # Downloads to ./apk-artifact/
+
+    - name: 📦 Create Release
+      uses: softprops/action-gh-release@v2 # Updated to v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          Release notes for ${{ github.ref_name }}
+
+          **Asset:**
+          - GameFileInspector-release-unsigned.apk
+        files: apk-artifact/GameFileInspector-release-unsigned.apk
+        # draft: false # Set to true to create a draft release
+        # prerelease: false # Set to true to mark as pre-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -10,9 +10,13 @@ The main project code and detailed documentation are located in the `GameFileIns
 
 ## CI/CD
 
-This project uses **GitLab CI/CD** for continuous integration and build automation. The primary CI/CD pipeline configuration for the Android application, including its build, test, security scan, and release lifecycle, is defined in `GameFileInspector/.gitlab-ci.yml`.
+This project employs a hybrid CI/CD approach:
 
-Builds are automatically triggered on pushes and pull requests, generating APKs and creating releases as defined in this pipeline.
+-   **GitHub Actions** is used for building the official unsigned release APKs and creating GitHub Releases when version tags (e.g., `v1.0.0`) are pushed. The workflow for this is defined in `GameFileInspector/.github/workflows/android-release-apk.yml`. This is the primary source for user-facing releases.
+
+-   **GitLab CI/CD** handles other continuous integration tasks, such as running tests on pushes and merge requests, building debug APKs, nightly builds, and integrated security scans (like secret detection). This configuration is defined in `GameFileInspector/.gitlab-ci.yml`.
+
+Build artifacts from both systems can be found in their respective "Actions" or "CI/CD" sections on GitHub and GitLab.
 
 ## Getting Started
 
