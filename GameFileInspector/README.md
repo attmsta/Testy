@@ -9,24 +9,24 @@ A powerful Android application for reverse engineering and modifying game files 
 
 ## 🚀 Automated Builds & Releases
 
-This project features comprehensive build automation that creates APK releases automatically:
+This project features comprehensive build automation that creates APK releases automatically using GitLab CI/CD:
 
-- ✅ **Automatic APK Generation** on every push to main branch and other triggers via GitHub Actions.
-- ✅ **GitHub Releases** with downloadable APK files created automatically.
-- ✅ **GitHub Actions** for CI/CD, providing comprehensive testing, building, and deployment.
-- ✅ **Local Build Scripts** for development and testing.
-- ✅ **Quality Assurance** with automated testing and security scanning through GitHub Actions.
+- ✅ **Automatic APK Generation**: Triggered on pushes to relevant branches (e.g., `main`) as defined in `GameFileInspector/.gitlab-ci.yml`.
+- ✅ **GitLab Releases**: Automatically created with downloadable APK files.
+- ✅ **GitLab CI/CD**: Provides comprehensive testing, building, and deployment for the project.
+- ✅ **Local Build Scripts**: Available for development and testing (e.g., `build_apk.sh`).
+- ✅ **Quality Assurance**: Automated testing and security scanning are integrated into the GitLab CI/CD pipeline.
 
 ### 📥 Download Latest Release
 
-**[📱 Download Latest APK](https://github.com/photoparsley/test/releases/latest)** - Always up-to-date with the latest features
+**[📱 Download Latest APK from GitLab Releases](https://gitlab.com/photoparsley/test/-/releases)** - Always up-to-date with the latest features (assuming releases are created here).
 
 ### 🔄 Build Status
 
 | Platform | Status | Details |
 |----------|--------|----------|
-| GitHub Actions | ![Build](https://img.shields.io/badge/build-automated-success) | [Latest Release](https://github.com/photoparsley/test/releases) / [Actions Workflow](https://github.com/photoparsley/test/actions) |
-| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` (See [Build Instructions](BUILD_AUTOMATION_GUIDE.md)) |
+| GitLab CI/CD | ![Pipeline](https://img.shields.io/badge/pipeline-automated-success) | [Pipeline Status](https://gitlab.com/photoparsley/test/-/pipelines) / [Releases](https://gitlab.com/photoparsley/test/-/releases) |
+| Local Build | ![Script](https://img.shields.io/badge/script-ready-success) | `./build_apk.sh` (See [BUILD_AUTOMATION_GUIDE.md](BUILD_AUTOMATION_GUIDE.md)) |
 
 ## Features
 

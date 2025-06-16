@@ -1,138 +1,94 @@
-# 🚀 Build Automation Guide
+# 🚀 Build Automation Guide (Updated for GitLab CI)
 
 ## Overview
 
-This guide covers the comprehensive build automation system for Game File Inspector, including CI/CD pipelines, local build scripts, and release management.
+This guide covers the comprehensive build automation system for Game File Inspector, primarily focusing on the GitLab CI/CD pipeline and local build scripts.
 
 ## 🔄 Automated Build Workflows
 
-This project uses **GitHub Actions** for CI/CD. The workflow is defined in `.github/workflows/build-and-release.yml`.
+This project uses **GitLab CI/CD** for continuous integration and deployment. The entire CI/CD pipeline configuration for the Android application, including build, test, security scans, and release, is defined in `GameFileInspector/.gitlab-ci.yml`.
 
-### GitHub Actions Workflow (`.github/workflows/build-and-release.yml`)
+### GitLab CI/CD Pipeline (`GameFileInspector/.gitlab-ci.yml`)
 
-The GitHub Actions workflow provides comprehensive automated building, testing, and releasing, deeply integrated with GitHub.
+The `GameFileInspector/.gitlab-ci.yml` file defines the complete pipeline for the Android application.
 
-#### Workflow Jobs
-The workflow consists of several key jobs:
-1.  **`test`**: Runs unit tests and lint checks on the codebase. This ensures code quality and catches regressions early.
-2.  **`build-debug`**: Compiles a debug version of the APK. This is typically run on pull requests and pushes to non-main branches to verify build integrity.
-3.  **`build-release`**: Compiles a release version of the APK (unsigned). This is run on pushes to the `main` branch and when tags are created.
-4.  **`create-release`**: Automatically creates a GitHub Release when changes are pushed to the `main` branch or a tag is created. This job downloads the release APK from `build-release` and attaches it to the GitHub Release, along with generated release notes.
+#### Pipeline Stages
+The pipeline is structured with the following stages, executed in order:
+1.  **`prepare`**: Sets up the build environment, installs dependencies (like Android SDK tools), and prepares necessary configurations. Caches relevant directories (`$PROJECT_SUBDIR/.gradle/`, `$PROJECT_SUBDIR/app/build/`, `$PROJECT_SUBDIR/build/`) to speed up subsequent runs.
+2.  **`test`**: Executes unit tests (`./gradlew test`) and lint checks (`./gradlew lint`). Test results (JUnit XML) and lint reports are saved as artifacts. This stage also includes a `security_scan` job for basic checks.
+3.  **`secret-detection`**: Performs automated secret detection using the `Security/Secret-Detection.gitlab-ci.yml` template. This helps identify accidental credential leaks.
+4.  **`build`**: Compiles debug (`./gradlew assembleDebug`) and release (`./gradlew assembleRelease`) versions of the APK. The resulting APKs are saved as artifacts. This stage might have separate jobs for debug and release builds, triggered on different conditions (e.g., debug for all branches, release for `main` and tags). It also includes a `nightly_build` job.
+5.  **`release`**: Creates a GitLab Release when changes are pushed to the `main` branch or a tag is created. This job uses the `release-cli` image, takes the release APK from the `build_release` job, generates release notes, and attaches the APK to the GitLab Release. A `deploy_manual` job is also available in this stage.
 
-*(Note: The workflow may include additional jobs for security scanning, performance analysis, etc., as configured in the YAML file.)*
+*(Other jobs like `performance_test` run in the `test` stage, and `cleanup` runs in a `.post` stage.)*
 
-#### Key Features & Advanced Capabilities
-- ✅ **Automatic APK Building**: Triggered on pushes to `main`, `develop`, tags (`v*`), pull requests to `main`, scheduled nightly builds, and manual dispatches.
+#### Key Features & Capabilities
+- ✅ **Automatic APK Building**: Triggered by pushes to specific branches (e.g., `main`, `develop`) and tags.
 - ✅ **Comprehensive Testing**: Includes unit tests and lint analysis.
-- ✅ **Artifact Management**: APKs and test results are stored as artifacts with configurable retention.
-- ✅ **Automated GitHub Releases**: New releases are automatically drafted or published with APKs and detailed release notes.
-- ✅ **Security Scanning**: (If configured) Checks for hardcoded secrets, permission issues, etc.
-- ✅ **Performance Analysis**: (If configured) Monitors APK size and other performance metrics.
-- 🎯 **Smart Triggering**: Builds and releases are triggered based on branch names (e.g., `main`, `develop`), event types (push, pull_request, tag), and file changes.
-- 🎯 **Artifact Caching**: Utilizes caching for Gradle dependencies (`~/.gradle/caches`, `~/.gradle/wrapper`, `GameFileInspector/.gradle`) to speed up build times. The cache key is based on OS and hash of Gradle files.
-- 🎯 **Multi-job Parallelization**: Jobs can run in parallel where appropriate to improve CI/CD efficiency.
-- 🎯 **Conditional Execution**: Jobs and steps can be run conditionally (e.g., `build-release` runs on `main` or tags, `create-release` depends on specific conditions).
-- 🎯 **Release Management**: Automatic versioning and release note generation are part of the `create-release` job.
+- ✅ **Artifact Management**: APKs, test reports, and other build outputs are stored as artifacts with configurable retention periods (e.g., `expire_in`).
+- ✅ **Automated GitLab Releases**: New releases are automatically created with APKs and detailed release notes.
+- ✅ **Environment Variables**: Uses GitLab CI/CD variables for configuration (e.g., `ANDROID_COMPILE_SDK`, `ANDROID_BUILD_TOOLS`).
+- ✅ **Caching**: Caches Gradle dependencies and build outputs to accelerate pipeline execution.
+- ✅ **Conditional Job Execution**: Jobs can be restricted to run only on specific branches or tags using the `only` keyword.
 
 #### Accessing Build Artifacts and Logs
-- **Build Logs**: Available directly within the "Actions" tab of the GitHub repository. Each workflow run shows detailed logs for every step.
-- **APKs**:
-    - Debug APKs are uploaded as artifacts in the `build-debug` job runs.
-    - Release APKs are uploaded as artifacts in the `build-release` job runs.
-    - Release APKs are also attached to GitHub Releases created by the `create-release` job.
-- **Test Reports**: Uploaded as artifacts in the `test` job runs.
+- **Build Logs**: Available directly within the "CI/CD" > "Pipelines" section of the GitLab repository. Each pipeline run shows detailed logs for every job.
+- **APKs and Other Artifacts**:
+    - Can be downloaded directly from completed jobs in a pipeline run.
+    - Release APKs are attached to GitLab Releases.
 
 ## 🛠️ Local Build Script (`build_apk.sh`)
 
 ### Features
-The local build script provides comprehensive APK building capabilities:
+The local build script (`build_apk.sh`, if present, or manual Gradle commands) provides capabilities for local APK building:
 
 ```bash
-# Basic usage
-./build_apk.sh                    # Build debug APK
-./build_apk.sh -t release         # Build release APK
-./build_apk.sh -c -t release      # Clean build release APK
-./build_apk.sh -t debug -i        # Build and install debug APK
+# Example: Build debug APK using Gradle wrapper (from GameFileInspector directory)
+./gradlew assembleDebug
+
+# Example: Build release APK using Gradle wrapper (from GameFileInspector directory)
+./gradlew assembleRelease
+
+# Example: Clean build artifacts (from GameFileInspector directory)
+./gradlew clean
 ```
+*(If a `build_apk.sh` script exists, its specific commands and options should be documented here. The commands above assume execution from within the `GameFileInspector` directory, where `gradlew` is located.)*
 
-### Command Line Options
-| Option | Description | Example |
-|--------|-------------|---------|
-| `-t, --type` | Build type (debug/release) | `-t release` |
-| `-c, --clean` | Clean build artifacts | `-c` |
-| `--no-tests` | Skip running tests | `--no-tests` |
-| `-i, --install` | Install APK after building | `-i` |
-| `-d, --device` | Show connected devices | `-d` |
-| `-h, --help` | Show help message | `-h` |
-
-### Build Process
-1. **Environment Validation** - Check Java, Android SDK, Gradle
-2. **Dependency Resolution** - Download and cache dependencies
-3. **Testing** (optional) - Run unit tests and lint checks
-4. **Compilation** - Build APK with specified configuration
-5. **Analysis** - APK size analysis and optimization suggestions
-6. **Installation** (optional) - Install on connected devices
-7. **Reporting** - Generate detailed build report
-
-### Build Report Generation
-The script generates comprehensive build reports:
-```
-Game File Inspector - Build Report
-==================================
-Generated: 2025-06-15 14:30:00
-
-Build Configuration:
-- Build Type: release
-- Clean Build: true
-- Tests Run: true
-- Build Duration: 45s
-
-APK Information:
-- File: app/build/outputs/apk/release/app-release-unsigned.apk
-- Size: 12.5MB
-- Target SDK: 34 (Android 14)
-- Minimum SDK: 24 (Android 7.0)
-
-Environment:
-- Java: openjdk version "17.0.2"
-- Gradle: Gradle 8.2
-- Android SDK: /home/user/Android/Sdk
-- OS: Linux 5.15.0
-
-Build Status: SUCCESS ✅
-```
+### Build Process (General, using Gradle)
+1. **Environment Validation**: Ensure JDK, Android SDK, and Gradle are correctly set up.
+2. **Dependency Resolution**: Gradle downloads and caches dependencies.
+3. **Testing** (optional but recommended): `(cd GameFileInspector && ./gradlew test lintDebug)`
+4. **Compilation**: `(cd GameFileInspector && ./gradlew assembleDebug)` or `(cd GameFileInspector && ./gradlew assembleRelease)`
+5. **Reporting**: Build reports are generated by Gradle in `GameFileInspector/app/build/reports/`.
 
 ## 📦 Release Management
 
-### Automatic Release Creation
-
-#### GitHub Releases
-- **Trigger**: Configured within the GitHub Actions workflow (`.github/workflows/build-and-release.yml`). Typically on pushes to the `main` branch or when new tags (e.g., `v1.0.0`) are pushed. Can also be triggered manually via `workflow_dispatch`.
-- **Assets**: The workflow uploads the release APK (e.g., `app-release-unsigned.apk`) and a versioned copy (e.g., `GameFileInspector-v<SHA>.apk`) to the GitHub Release.
-- **Versioning**: The `create-release` job in the workflow generates a version name. If triggered by a tag, it uses the tag name. Otherwise, it might use a date-based version with a commit SHA.
-- **Release Notes**: Automatically generated as part of the `create-release` job, summarizing features and build information.
-- **Access**: Releases are available under the "Releases" section of the GitHub repository.
+### GitLab Releases
+- **Trigger**: Typically configured in the `GameFileInspector/.gitlab-ci.yml` file for pushes to the `main` branch or new tags.
+- **Process**: The `release` job in `GameFileInspector/.gitlab-ci.yml` uses `registry.gitlab.com/gitlab-org/release-cli` to create a release. It includes release notes and a link to the release APK artifact.
+- **Assets**: The primary asset is the release APK (e.g., `app-release-unsigned.apk`).
+- **Versioning**: The release name and tag often use `$CI_COMMIT_SHORT_SHA` or `$CI_COMMIT_TAG`.
+- **Access**: Releases are available under the "Deploy" > "Releases" section of the GitLab repository.
 
 ### Release Artifacts
-Each release includes:
-- 📱 **Release APK** - Optimized production build
-- 📱 **Debug APK** - Development build with debugging enabled
-- 📊 **Build Reports** - Comprehensive build and test results
-- 📝 **Release Notes** - Feature descriptions and change logs
-- 🔍 **Security Reports** - Security analysis results
+Each CI/CD pipeline run that completes a build stage will produce:
+- 📱 **Release APK** (if `assembleRelease` is run)
+- 📱 **Debug APK** (if `assembleDebug` is run)
+- 📊 **Test Reports** (JUnit XML, lint reports)
+- 📝 **Release Notes** (for releases created by the pipeline)
 
-## 🔧 Build Configuration
+## 🔧 Build Configuration (Gradle)
 
-### Gradle Configuration
-The build system uses Gradle 8.2 with optimized settings:
+The primary build configuration is within `build.gradle` (module-level) and `build.gradle` (project-level) files in the `GameFileInspector` directory.
 
 ```gradle
+// Example from GameFileInspector/app/build.gradle
 android {
     compileSdk 34
     
     defaultConfig {
         applicationId "com.gamefileinspector"
-        minSdk 24
+        minSdk 21 // Note: Original .gitlab-ci.yml used minSdk 24 in release notes text
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -140,245 +96,71 @@ android {
     
     buildTypes {
         debug {
-            debuggable true
-            minifyEnabled false
-            applicationIdSuffix ".debug"
+            // Debug specific configs
         }
-        
         release {
-            minifyEnabled true
+            minifyEnabled false // As per original .gitlab-ci.yml, though typically true for release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug // For unsigned builds
+            // Signing config would be here for signed releases
         }
     }
 }
 ```
-
-### Build Optimization
-- **ProGuard/R8** - Code shrinking and obfuscation for release builds
-- **Resource Optimization** - Automatic resource shrinking
-- **APK Splitting** - Architecture-specific APKs (optional)
-- **Bundle Generation** - Android App Bundle support
 
 ## 🧪 Testing Integration
 
-### Automated Testing
-- **Unit Tests** - Comprehensive test suite with Robolectric
-- **Lint Analysis** - Code quality and best practice checks
-- **Security Scanning** - Vulnerability and secret detection
-- **Performance Testing** - APK size and method count analysis
-
-### Test Reporting
-- **JUnit Reports** - Standard test result format
-- **Coverage Reports** - Code coverage analysis
-- **Lint Reports** - Detailed code quality metrics
-- **Security Reports** - Security vulnerability assessments
+The GitLab CI/CD pipeline in `GameFileInspector/.gitlab-ci.yml` integrates various forms of testing:
+- **Unit Tests**: Executed via `(cd $PROJECT_SUBDIR && ./gradlew test)`.
+- **Lint Analysis**: Executed via `(cd $PROJECT_SUBDIR && ./gradlew lint)`.
+- **Security Scans**:
+    - A `security_scan` job performs basic checks for hardcoded secrets and manifest issues (part of the `test` stage).
+    - Automated secret detection is integrated via the `secret-detection` stage using GitLab's standard template.
+- **Test Reporting**: JUnit XML reports are generated and can be integrated with GitLab for display. Artifacts path: `$PROJECT_SUBDIR/app/build/test-results/` and `$PROJECT_SUBDIR/app/build/reports/`.
 
 ## 🔒 Security and Signing
 
-### Security Measures
-- **Secret Scanning** - Automated detection of hardcoded secrets
-- **Permission Analysis** - Review of requested Android permissions
-- **Dependency Scanning** - Analysis of third-party dependencies
-- **Code Quality Checks** - Static analysis for security issues
+### Security Measures in CI/CD
+- **Secret Detection**: Integrated into the pipeline via the `secret-detection` stage in `GameFileInspector/.gitlab-ci.yml`, using the `Security/Secret-Detection.gitlab-ci.yml` template. This is controlled by the `SECRET_DETECTION_ENABLED: 'true'` variable in the CI file.
+- **Basic Security Checks**: The `security_scan` job in the `test` stage performs additional checks for hardcoded secrets in source code and common Android manifest issues.
 
 ### APK Signing
-For production releases, configure signing:
-
-```bash
-# Generate keystore (one-time setup)
-keytool -genkey -v -keystore release-key.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000
-
-# Configure signing in build.gradle
-android {
-    signingConfigs {
-        release {
-            storeFile file('release-key.keystore')
-            storePassword System.getenv('KEYSTORE_PASSWORD')
-            keyAlias 'release'
-            keyPassword System.getenv('KEY_PASSWORD')
-        }
-    }
-}
-```
-
-## 📊 Performance Monitoring
-
-### Build Performance
-- **Build Time Tracking** - Monitor compilation duration
-- **Cache Efficiency** - Gradle and dependency cache utilization
-- **Resource Usage** - Memory and CPU usage during builds
-- **Parallel Execution** - Multi-core build optimization
-
-### APK Analysis
-- **Size Monitoring** - Track APK size growth over time
-- **Method Count** - Monitor DEX method count limits
-- **Resource Analysis** - Identify large resources and assets
-- **Architecture Support** - Multi-architecture build analysis
+- The provided `GameFileInspector/.gitlab-ci.yml` builds an `app-release-unsigned.apk`.
+- For actual production releases, APK signing must be configured. This typically involves:
+    1.  Generating a keystore.
+    2.  Storing keystore information securely (e.g., using GitLab CI/CD protected variables).
+    3.  Updating `GameFileInspector/app/build.gradle` to use these variables for signing the release build.
 
 ## 🚀 Deployment Strategies
 
 ### Development Deployment
-1. **Feature Branches** - Debug builds for testing
-2. **Pull Requests** - Automated builds for code review
-3. **Development Releases** - Internal testing builds
+- Debug APKs from feature branches can be used for testing. These are built by the `build_debug` job in GitLab CI.
 
 ### Production Deployment
-1. **Release Candidates** - Pre-release testing builds
-2. **Stable Releases** - Production-ready builds
-3. **Hotfix Releases** - Critical bug fix deployments
+- Release APKs generated from the `main` branch or tags are published to GitLab Releases via the `release` job in GitLab CI.
 
 ### Distribution Channels
-- **GitHub Releases** - Public distribution with download links
-- **Direct APK** - Manual installation for testing (can be downloaded from GitHub Actions artifacts or releases)
-- **App Stores** - Future Google Play Store distribution
+- **GitLab Releases**: Primary channel for distributing built APKs.
+- **Direct APK Download**: From pipeline artifacts for testing/internal use.
 
-## 🔄 Continuous Integration Best Practices
+## 🛠️ Troubleshooting CI/CD
 
-### Branch Strategy
-```
-main branch:
-├── Automatic release builds
-├── Comprehensive testing
-├── Security scanning
-└── Production deployment
-
-feature branches:
-├── Debug builds only
-├── Basic testing
-├── Pull request validation
-└── Development feedback
-
-release tags:
-├── Stable release builds
-├── Full test suite
-├── Security validation
-└── Public distribution
-```
-
-### Build Triggers
-- **Push Events** - Automatic builds on code changes
-- **Pull Requests** - Validation builds for code review
-- **Scheduled Builds** - Nightly builds for continuous testing
-- **Manual Triggers** - On-demand builds for specific needs
-
-### Artifact Management
-- **Retention Policies** - Automatic cleanup of old artifacts
-- **Storage Optimization** - Efficient artifact storage
-- **Access Control** - Secure artifact distribution
-- **Version Tracking** - Comprehensive build history
-
-## 🛠️ Troubleshooting
-
-### Common Build Issues
-
-#### Android SDK Not Found
-```bash
-# Set environment variables
-export ANDROID_HOME=/path/to/android-sdk
-export ANDROID_SDK_ROOT=/path/to/android-sdk
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-```
-
-#### Gradle Build Failures
-```bash
-# Clean and rebuild
-./gradlew clean
-./gradlew assembleDebug --stacktrace --info
-
-# Check Gradle wrapper
-./gradlew wrapper --gradle-version 8.2
-```
-
-#### Memory Issues
-```bash
-# Increase Gradle memory
-export GRADLE_OPTS="-Xmx4g -XX:MaxMetaspaceSize=512m"
-
-# Enable parallel builds
-echo "org.gradle.parallel=true" >> gradle.properties
-```
-
-#### Dependency Resolution
-```bash
-# Refresh dependencies
-./gradlew --refresh-dependencies
-
-# Clear Gradle cache
-rm -rf ~/.gradle/caches/
-```
-
-### CI/CD Troubleshooting
-
-#### Pipeline Failures
-1. **Check Logs** - Review detailed build logs
-2. **Environment Issues** - Verify SDK and tool versions
-3. **Dependency Problems** - Check for version conflicts
-4. **Resource Limits** - Monitor memory and disk usage
-
-#### Artifact Issues
-1. **Upload Failures** - Check artifact size limits
-2. **Download Problems** - Verify artifact retention policies
-3. **Permission Issues** - Review access control settings
-4. **Storage Limits** - Monitor repository storage usage
-
-## 📈 Metrics and Monitoring
-
-### Build Metrics
-- **Success Rate** - Percentage of successful builds
-- **Build Duration** - Average and trend analysis
-- **Test Coverage** - Code coverage percentage
-- **APK Size** - Size growth tracking
-
-### Quality Metrics
-- **Lint Issues** - Code quality trend analysis
-- **Security Vulnerabilities** - Security issue tracking
-- **Performance Regressions** - Performance impact monitoring
-- **Dependency Updates** - Outdated dependency tracking
-
-## 🎯 Future Enhancements
-
-### Planned Improvements
-- **Signed APK Builds** - Production signing integration
-- **App Bundle Support** - Android App Bundle generation
-- **Multi-flavor Builds** - Different app variants
-- **Automated Testing** - UI and integration tests
-- **Performance Profiling** - Detailed performance analysis
-- **Store Deployment** - Google Play Store integration
-
-### Advanced Features
-- **A/B Testing** - Multiple build variants
-- **Feature Flags** - Runtime feature toggling
-- **Crash Reporting** - Automated crash analysis
-- **Analytics Integration** - Usage and performance metrics
-- **Update Mechanisms** - In-app update capabilities
-
----
+### Common GitLab CI/CD Issues
+- **Pipeline Failures**: Check job logs in GitLab CI/CD for error messages.
+- **Environment Issues**: Ensure `image: openjdk:17-jdk` is appropriate and `before_script` correctly installs all dependencies. The `before_script` in `GameFileInspector/.gitlab-ci.yml` handles Android SDK setup.
+- **Android SDK Problems**: Verify paths and that `sdkmanager` commands succeed. `ANDROID_HOME` is set to `$PWD/android-sdk-linux` relative to the job's working directory.
+- **Gradle Errors**: Examine Gradle output in the job logs. Running Gradle commands with `--stacktrace` (as done in the CI file) provides more details. Remember commands are run from the `GameFileInspector` subdirectory context in the CI script (e.g., `(cd GameFileInspector && ./gradlew... )` if the yml is at root, or just `./gradlew` if yml is in `GameFileInspector` and workspace is set there). The current CI file is in `GameFileInspector/` and assumes it's the working dir.
+- **Cache Issues**: Sometimes clearing the GitLab CI/CD cache (if problematic) or adjusting cache paths can help. Cache paths in `GameFileInspector/.gitlab-ci.yml` are `.gradle/`, `app/build/`, `build/` relative to `GameFileInspector/`.
 
 ## 📚 Quick Reference
 
-### Essential Commands
-```bash
-# Local development
-./build_apk.sh -t debug -i        # Build and install debug APK
-./build_apk.sh -c -t release      # Clean release build
-./run_tests.sh                    # Run comprehensive tests
-
-# CI/CD triggers
-git push origin main              # Trigger release build
-git tag v1.0.0 && git push --tags # Trigger tagged release
-```
-
 ### Important Files
-- `.github/workflows/build-and-release.yml` - GitHub Actions workflow configuration.
-- `build_apk.sh` - Local build script for development and manual builds.
-- `run_tests.sh` - Test execution script
-- `gradle.properties` - Gradle build configuration
+- `GameFileInspector/.gitlab-ci.yml`: The sole CI/CD pipeline configuration file for the Android application, including build, test, security scanning (secret detection), and release processes.
+- `GameFileInspector/build.gradle`: Project and app module Gradle build scripts.
+- `GameFileInspector/gradlew`: Gradle wrapper script, executed from within `GameFileInspector/` as orchestrated by the CI pipeline.
 
 ### Support Resources
-- **Documentation** - Complete guides in repository
-- **Issue Tracking** - GitHub Issues for bug reports and feature requests.
-- **Build Logs** - Detailed execution logs available in the GitHub Actions tab for each workflow run.
-- **Community** - Developer forums and discussions (if applicable).
+- **Documentation**: This guide and other markdown files in the repository.
+- **Issue Tracking**: GitLab Issues for the project.
+- **Build Logs**: Detailed execution logs for each job in GitLab CI/CD pipelines.
 
-This automated build system, powered by GitHub Actions, ensures reliable, consistent, and secure APK generation for every code change, enabling rapid development and deployment of the Game File Inspector application.
+This build automation system, centered around GitLab CI/CD, facilitates reliable and consistent builds, testing, and releases for the Game File Inspector application.
