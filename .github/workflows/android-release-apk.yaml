@@ -9,8 +9,6 @@ on:
 env:
   ANDROID_PROJECT_PATH: GameFileInspector
   JAVA_VERSION: '17'
-  # ANDROID_COMPILE_SDK: "34" # Usually derived from project's build.gradle
-  # ANDROID_BUILD_TOOLS: "34.0.0" # Usually derived from project's build.gradle
 
 jobs:
   build-release-apk:
@@ -29,8 +27,11 @@ jobs:
 
     - name: 📱 Set up Android SDK
       uses: android-actions/setup-android@v3
-      # This action will automatically install the required SDK tools and platforms
-      # based on the project's build.gradle files.
+
+    - name: 📦 Install required Android SDK packages
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
     - name: 🎯 Cache Gradle dependencies
       uses: actions/cache@v4
@@ -53,17 +54,11 @@ jobs:
 
     - name: 🧪 Run unit tests (optional)
       run: ./gradlew testDebugUnitTest --stacktrace
-      # Using testDebugUnitTest to run tests for the debug variant, common practice.
-      # Change to testReleaseUnitTest if specific release tests exist.
       working-directory: ${{ env.ANDROID_PROJECT_PATH }}
-      # continue-on-error: true # Decide if build should fail on test failures
 
     - name: 🔍 Run lint checks (optional)
       run: ./gradlew lintDebug --stacktrace
-      # Using lintDebug to run lint for the debug variant.
-      # Change to lintRelease if needed.
       working-directory: ${{ env.ANDROID_PROJECT_PATH }}
-      # continue-on-error: true # Decide if build should fail on lint errors
 
     - name: 🚀 Build unsigned release APK
       run: ./gradlew assembleRelease --stacktrace
@@ -78,12 +73,12 @@ jobs:
       with:
         name: release-apk
         path: ${{ env.ANDROID_PROJECT_PATH }}/app/build/outputs/apk/release/GameFileInspector-release-unsigned.apk
-        retention-days: 7 # Adjust as needed
+        retention-days: 7
 
   create-github-release:
     name: Create GitHub Release
     needs: build-release-apk
-    if: startsWith(github.ref, 'refs/tags/v') # Only run for version tags
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
 
     steps:
@@ -91,10 +86,10 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: release-apk
-        path: apk-artifact # Downloads to ./apk-artifact/
+        path: apk-artifact
 
     - name: 📦 Create Release
-      uses: softprops/action-gh-release@v2 # Updated to v2
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
@@ -104,7 +99,5 @@ jobs:
           **Asset:**
           - GameFileInspector-release-unsigned.apk
         files: apk-artifact/GameFileInspector-release-unsigned.apk
-        # draft: false # Set to true to create a draft release
-        # prerelease: false # Set to true to mark as pre-release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
